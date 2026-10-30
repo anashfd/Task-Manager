@@ -106,3 +106,43 @@ button:hover {
   background-color: #2c4a6e;
   color: white;
 }
+
+.kpis {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.kpi {
+  flex: 1;
+  border: 1px solid #b8c7d6;
+  border-radius: 8px;
+  background-color: #eef3f8;
+  padding: 8px;
+  text-align: center;
+}
+
+.kpiVal {
+  display: block;
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c4a6e;
+}
+
+.kpiStat {
+  display: block;
+  font-size: 12px;
+  color: #556677;
+}
+
+.search {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  padding: 6px;
+}
+
+.empty {
+  font-size: 13px;
+  color: #556677;
+}

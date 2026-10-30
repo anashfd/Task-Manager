@@ -3,7 +3,14 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import "./Checklist.css";
 
 export default function Checklist() {
-  const [task, setTask] = useState([]);
+  // localStorage when the page starts
+  const [task, setTask] = useState(() => {
+    const saved = localStorage.getItem("tasks");
+    if (saved === null) {
+      return [];
+    }
+    return JSON.parse(saved);
+  });
 
   const [text, setText] = useState("");
   const [resource, setResource] = useState("");
@@ -12,15 +19,16 @@ export default function Checklist() {
   const [status, setStatus] = useState("todo");
 
   const [editIndex, setEditIndex] = useState(null);
+  const [search, setSearch] = useState("");
 
   function getColor(s) {
     if (s === "done") {
-      return "#4a8f5f";
+      return "green";
     }
     if (s === "in progress") {
-      return "#d4943a";
+      return "orange";
     }
-    return "#7a8b9c";
+    return "gray";
   }
 
   function resetForm() {
@@ -33,14 +41,24 @@ export default function Checklist() {
   }
 
   function addItem() {
-    if (text.trim() === "") {
+    const today = new Date().toLocaleDateString("en-CA");
+    
+    if (
+      text.trim() === "" || resource.trim() === "" || startDate === "" || endDate === "") {
+      alert("all inputs must be filled");
       return;
     }
 
     if (startDate !== "" && endDate !== "" && endDate < startDate) {
-      alert("End date can't be before start date");
+      alert("end date can't be before start date dummy");
       return;
     }
+
+    if (startDate !== today) {
+      alert("start date must be today");
+      return;
+    }
+
 
     const newTask = {
       text: text,
@@ -50,17 +68,21 @@ export default function Checklist() {
       status: status,
     };
 
+    let newList;
+
     if (editIndex === null) {
-      setTask([...task, newTask]);
+      newList = [...task, newTask];
     } else {
-      const updatedtask = task.map((item, index) => {
+      newList = task.map((item, index) => {
         if (index === editIndex) {
           return newTask;
         }
         return item;
       });
-      setTask(updatedtask);
     }
+
+    setTask(newList);
+    localStorage.setItem("tasks", JSON.stringify(newList));
 
     resetForm();
   }
@@ -77,28 +99,32 @@ export default function Checklist() {
   }
 
   function deleteItem(indexToDelete) {
-    const updatedtask = task.filter((item, index) => {
+    const updatedtasks = task.filter((item, index) => {
       return index !== indexToDelete;
     });
 
-    setTask(updatedtask);
-
+    setTask(updatedtasks);
+    localStorage.setItem("tasks", JSON.stringify(updatedtasks));
     resetForm();
   }
 
-  function enRetard(item){
-    const current = new Date();
-    return current > item.endDate;
+  function enRetard(item) {
+    const today = new Date().toLocaleDateString("en-CA");
+    if (item.status !== 'done'){
+    return item.endDate < today;
+    }
   }
 
 
-  // for pie chart
-
+  let lateCount = 0;
   let todoCount = 0;
   let progressCount = 0;
   let doneCount = 0;
 
   for (let i = 0; i < task.length; i++) {
+    if (enRetard(task[i])) {
+      lateCount = lateCount + 1;
+    }
     if (task[i].status === "todo") {
       todoCount = todoCount + 1;
     }
@@ -110,6 +136,18 @@ export default function Checklist() {
     }
   }
 
+  const filtered = task
+    .map((item, index) => ({ item, index }))
+    .filter(({ item }) => {
+      const q = search.trim().toLowerCase();
+      return (
+        item.text.toLowerCase().includes(q) ||
+        item.resource.toLowerCase().includes(q) ||
+        item.status.toLowerCase().includes(q)
+      );
+    });
+    
+ // for pie chart
   const data = [
     { name: "todo", value: todoCount },
     { name: "in progress", value: progressCount },
@@ -180,16 +218,49 @@ export default function Checklist() {
         <button onClick={resetForm}>Cancel</button>
       </div>
 
+      <div className="kpis">
+        <div className="kpi">
+          <span className="kpiVal">{task.length}</span>
+          <span className="kpiStat">Total tasks</span>
+        </div>
+        <div className="kpi">
+          <span className="kpiVal">{todoCount}</span>
+          <span className="kpiStat">Todo</span>
+        </div>
+        <div className="kpi">
+          <span className="kpiVal">{progressCount}</span>
+          <span className="kpiStat">In progress</span>
+        </div>
+        <div className="kpi">
+          <span className="kpiVal">{doneCount}</span>
+          <span className="kpiStat">Done</span>
+        </div>
+        <div className="kpi">
+          <span className="kpiVal">{lateCount}</span>
+          <span className="kpiStat">Late</span>
+        </div>
+      </div>
+
       <div className="row">
         <div className="tasks">
-          <h3>Tasks</h3>
-          {task.map((item, index) => (
+          <h3>Tasks ({filtered.length})</h3>
+          <input
+            type="text"
+            className="search"
+            placeholder="Search by task, resource or status..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          {task.length > 0 && filtered.length === 0 && (
+            <p className="empty">No task matches "{search}".</p>
+          )}
+          {filtered.map(({ item, index }) => (
               <div
                 className="item"
                 key={index}
                 style={{
-                  backgroundColor: enRetard(item) ? getColor(item.status) : "red" ,
-                  color: enRetard(item) ? "black" : "white",
+                  backgroundColor: enRetard(item) ? "red" : getColor(item.status),
+                  color: enRetard(item) ? "white" : "black",
                 }}
               >
               <b>{item.text}</b>
