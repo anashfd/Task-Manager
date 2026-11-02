@@ -3,7 +3,6 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import "./Checklist.css";
 
 export default function Checklist() {
-  // localStorage when the page starts
   const [task, setTask] = useState(() => {
     const saved = localStorage.getItem("tasks");
     if (saved === null) {
@@ -28,7 +27,11 @@ export default function Checklist() {
     if (s === "in progress") {
       return "orange";
     }
-    return "gray";
+    if(s === "todo"){
+      return "gray";
+    }
+    return "red"
+    
   }
 
   function resetForm() {
@@ -53,12 +56,12 @@ export default function Checklist() {
       alert("end date can't be before start date dummy");
       return;
     }
-
+    /*
     if (startDate !== today) {
       alert("start date must be today");
       return;
     }
-
+    */
 
     const newTask = {
       text: text,
@@ -111,8 +114,11 @@ export default function Checklist() {
   function enRetard(item) {
     const today = new Date().toLocaleDateString("en-CA");
     if (item.status !== 'done'){
-    return item.endDate < today;
+      if (item.endDate < today){
+        item.status = "late"
+      }
     }
+
   }
 
 
@@ -122,7 +128,7 @@ export default function Checklist() {
   let doneCount = 0;
 
   for (let i = 0; i < task.length; i++) {
-    if (enRetard(task[i])) {
+    if (task[i].status === "late") {
       lateCount = lateCount + 1;
     }
     if (task[i].status === "todo") {
@@ -152,6 +158,7 @@ export default function Checklist() {
     { name: "todo", value: todoCount },
     { name: "in progress", value: progressCount },
     { name: "done", value: doneCount },
+    {name: "late" , value : lateCount}
   ];
 
   return (
@@ -159,7 +166,7 @@ export default function Checklist() {
       <h2>Checklist</h2>
 
       <div className="form">
-        <table>
+        <table >
           <tbody>
             <tr>
               <td>Task:</td>
@@ -259,21 +266,24 @@ export default function Checklist() {
                 className="item"
                 key={index}
                 style={{
-                  backgroundColor: enRetard(item) ? "red" : getColor(item.status),
-                  color: enRetard(item) ? "white" : "black",
+                  backgroundColor: getColor(item.status),
+                  color: item.status === "late" ? "white" : "black",
                 }}
               >
               <b>{item.text}</b>
               <span 
               className="info"
               style = {{
-                color: enRetard(item) ? "black" : "white"
+                color: item.status === "late" ? "black" : "white"
               }}
               >
                 Resource: {item.resource} | Start: {item.startDate} | End: {item.endDate}
               </span>
 
-              <span className="status" style={{ backgroundColor: getColor(item.status) }}>
+              <span className="status" style={{ 
+                backgroundColor: getColor(item.status),
+                color: item.status === "late" ? "white" : "black"
+                }}>
                 {item.status}
               </span>
 
@@ -290,6 +300,7 @@ export default function Checklist() {
               <Cell fill={getColor("todo")} />
               <Cell fill={getColor("in progress")} />
               <Cell fill={getColor("done")} />
+              <Cell fill={getColor("late")} />
             </Pie>
             <Tooltip />
             <Legend />
