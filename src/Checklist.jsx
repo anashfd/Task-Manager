@@ -128,6 +128,8 @@ export default function Checklist() {
   let doneCount = 0;
 
   for (let i = 0; i < task.length; i++) {
+    enRetard(task[i]);
+    
     if (task[i].status === "late") {
       lateCount = lateCount + 1;
     }
